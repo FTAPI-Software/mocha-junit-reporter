@@ -272,7 +272,6 @@ function MochaJUnitReporter(runner, options) {
   }
 
   this._runner.on('end', function(){
-    console.log('flush');
     this.flush(testsuites);
   }.bind(this));
 }
@@ -332,7 +331,8 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
         name: flipClassAndName ? classname : name,
         time: (typeof test.duration === 'undefined') ? 0 : test.duration / 1000,
         classname: flipClassAndName ? name : classname
-      }
+      },
+      retries: test._currentRetry
     }]
   };
 
@@ -469,10 +469,12 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
     _suiteAttr.timestamp = new Date(_suiteAttr.timestamp).toISOString().slice(0, -5);
     _suiteAttr.failures = 0;
     _suiteAttr.skipped = 0;
+    _suiteAttr.retries = 0;
 
     _cases.forEach(function(testcase) {
       var lastNode = testcase.testcase[testcase.testcase.length - 1];
 
+      _suiteAttr.retries = Number('retries' in lastNode);
       _suiteAttr.skipped += Number('skipped' in lastNode);
       _suiteAttr.failures += Number('failure' in lastNode);
       if (typeof testcase.testcase[0]._attr.time === 'number') {
