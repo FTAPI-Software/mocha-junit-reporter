@@ -272,6 +272,7 @@ function MochaJUnitReporter(runner, options) {
   }
 
   this._runner.on('end', function(){
+    console.log('flush');
     this.flush(testsuites);
   }.bind(this));
 }
