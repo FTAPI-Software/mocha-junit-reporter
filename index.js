@@ -474,11 +474,13 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
     _cases.forEach(function(testcase) {
       var lastNode = testcase.testcase[testcase.testcase.length - 1];
 
-      _suiteAttr.retries += Number('retries' in lastNode._attr);
       _suiteAttr.skipped += Number('skipped' in lastNode);
       _suiteAttr.failures += Number('failure' in lastNode);
       if (typeof testcase.testcase[0]._attr.time === 'number') {
         testcase.testcase[0]._attr.time = testcase.testcase[0]._attr.time.toFixed(3);
+      }
+      if (typeof testcase.testcase[0]._attr.retries === 'number') {
+        _suiteAttr.retries += testcase.testcase[0]._attr.retries;
       }
     });
 
