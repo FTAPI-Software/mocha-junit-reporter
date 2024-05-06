@@ -330,9 +330,9 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
       _attr: {
         name: flipClassAndName ? classname : name,
         time: (typeof test.duration === 'undefined') ? 0 : test.duration / 1000,
-        classname: flipClassAndName ? name : classname
-      },
-      retries: test._currentRetry
+        classname: flipClassAndName ? name : classname,
+        retries: test._currentRetry
+      }
     }]
   };
 
@@ -474,7 +474,7 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
     _cases.forEach(function(testcase) {
       var lastNode = testcase.testcase[testcase.testcase.length - 1];
 
-      _suiteAttr.retries = Number('retries' in lastNode);
+      _suiteAttr.retries = Number('retries' in lastNode._attr);
       _suiteAttr.skipped += Number('skipped' in lastNode);
       _suiteAttr.failures += Number('failure' in lastNode);
       if (typeof testcase.testcase[0]._attr.time === 'number') {
