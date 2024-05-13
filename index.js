@@ -194,6 +194,33 @@ function getJenkinsClassname (test, options) {
   return titles.join(options.suiteTitleSeparatedBy);
 }
 
+function appendFormattedErrorMessageToTestcase(testcase, err, self) {
+    var message;
+    if (err.message && typeof err.message.toString === 'function') {
+      message = err.message + '';
+    } else if (typeof err.inspect === 'function') {
+      message = err.inspect() + '';
+    } else {
+      message = '';
+    }
+    var failureMessage = err.stack || message;
+    if (!Base.hideDiff && err.expected !== undefined) {
+      var oldUseColors = Base.useColors;
+      Base.useColors = false;
+      failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
+      Base.useColors = oldUseColors;
+    }
+    var failureElement = {
+      _attr: {
+        message: self.removeInvalidCharacters(message) || '',
+        type: err.name || ''
+      },
+      _cdata: self.removeInvalidCharacters(failureMessage)
+    };
+
+    testcase.testcase.push({failure: failureElement});
+}
+
 /**
  * JUnit reporter for mocha.js.
  * @module mocha-junit-reporter
@@ -331,7 +358,8 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
         name: flipClassAndName ? classname : name,
         time: (typeof test.duration === 'undefined') ? 0 : test.duration / 1000,
         classname: flipClassAndName ? name : classname,
-        retries: test._currentRetry
+        retries: test._currentRetry,
+        conclusion: err ? 'failure' : 'success',
       }
     }]
   };
@@ -357,31 +385,14 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
     testcase.testcase.push({'system-err': this.removeInvalidCharacters(stripAnsi(test.consoleErrors.join('\n')))});
   }
 
+  if (test.prevAttempts) {
+    const self = this;
+    test.prevAttempts.forEach(function (attempt) {
+      appendFormattedErrorMessageToTestcase(testcase, attempt.err, self);
+    })
+    }
   if (err) {
-    var message;
-    if (err.message && typeof err.message.toString === 'function') {
-      message = err.message + '';
-    } else if (typeof err.inspect === 'function') {
-      message = err.inspect() + '';
-    } else {
-      message = '';
-    }
-    var failureMessage = err.stack || message;
-    if (!Base.hideDiff && err.expected !== undefined) {
-        var oldUseColors = Base.useColors;
-        Base.useColors = false;
-        failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
-        Base.useColors = oldUseColors;
-    }
-    var failureElement = {
-      _attr: {
-        message: this.removeInvalidCharacters(message) || '',
-        type: err.name || ''
-      },
-      _cdata: this.removeInvalidCharacters(failureMessage)
-    };
-
-    testcase.testcase.push({failure: failureElement});
+    appendFormattedErrorMessageToTestcase(testcase, err, this);
   }
   return testcase;
 };
