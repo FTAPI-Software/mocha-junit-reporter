@@ -194,31 +194,29 @@ function getJenkinsClassname (test, options) {
   return titles.join(options.suiteTitleSeparatedBy);
 }
 
-function appendFormattedErrorMessageToTestcase(testcase, err, self) {
-    var message;
-    if (err.message && typeof err.message.toString === 'function') {
-      message = err.message + '';
-    } else if (typeof err.inspect === 'function') {
-      message = err.inspect() + '';
-    } else {
-      message = '';
-    }
-    var failureMessage = err.stack || message;
-    if (!Base.hideDiff && err.expected !== undefined) {
-      var oldUseColors = Base.useColors;
-      Base.useColors = false;
-      failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
-      Base.useColors = oldUseColors;
-    }
-    var failureElement = {
-      _attr: {
-        message: self.removeInvalidCharacters(message) || '',
-        type: err.name || ''
-      },
-      _cdata: self.removeInvalidCharacters(failureMessage)
-    };
-
-    testcase.testcase.push({failure: failureElement});
+function formatErrorMessage(err, removeInvalidCharacters) {
+  var message;
+  if (err.message && typeof err.message.toString === 'function') {
+    message = err.message + '';
+  } else if (typeof err.inspect === 'function') {
+    message = err.inspect() + '';
+  } else {
+    message = '';
+  }
+  var failureMessage = err.stack || message;
+  if (!Base.hideDiff && err.expected !== undefined) {
+    var oldUseColors = Base.useColors;
+    Base.useColors = false;
+    failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
+    Base.useColors = oldUseColors;
+  }
+  return {
+    _attr: {
+      message: removeInvalidCharacters(message) || '',
+      type: err.name || ''
+    },
+    _cdata: removeInvalidCharacters(failureMessage)
+  };
 }
 
 /**
@@ -388,11 +386,11 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
   if (test.prevAttempts) {
     const self = this;
     test.prevAttempts.forEach(function (attempt) {
-      appendFormattedErrorMessageToTestcase(testcase, attempt.err, self);
+      testcase.testcase.push({flakyFailure: formatErrorMessage(attempt.err, self.removeInvalidCharacters)});
     })
-    }
+  }
   if (err) {
-    appendFormattedErrorMessageToTestcase(testcase, err, this);
+    testcase.testcase.push({failure: formatErrorMessage(err, this.removeInvalidCharacters)});
   }
   return testcase;
 };
