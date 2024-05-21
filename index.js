@@ -387,7 +387,7 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
     const self = this;
     test.prevAttempts.forEach(function (attempt) {
       testcase.testcase.push({flakyFailure: formatErrorMessage(attempt.err, self.removeInvalidCharacters)});
-    })
+    });
   }
   if (err) {
     testcase.testcase.push({failure: formatErrorMessage(err, this.removeInvalidCharacters)});

@@ -21,7 +21,8 @@ module.exports = function(stats, options) {
               timestamp: "1970-01-01T00:00:00", // ISO timestamp truncated to the second
               tests: "0",
               failures: "0",
-              time: "0.000"
+              time: "0.000",
+              retries: "0"
             }
           }
         ]
@@ -34,7 +35,8 @@ module.exports = function(stats, options) {
               timestamp: "1970-01-01T00:00:00",
               tests: "3",
               failures: "2",
-              time: "100.001"
+              time: "100.001",
+              retries: "0"
             }
           },
           {
@@ -42,7 +44,9 @@ module.exports = function(stats, options) {
               _attr: {
                 name: "Foo Bar can weez the juice",
                 classname: "can weez the juice",
-                time: "0.101"
+                time: "0.101",
+                retries: "0",
+                conclusion: "success"
               }
             }
           },
@@ -52,7 +56,9 @@ module.exports = function(stats, options) {
                 _attr: {
                   name: "Foo Bar can narfle the garthog",
                   classname: "can narfle the garthog",
-                  time: "2.002"
+                  time: "2.002",
+                  retries: "0",
+                  conclusion: "failure"
                 }
               },
               {
@@ -72,7 +78,9 @@ module.exports = function(stats, options) {
                 _attr: {
                   name: "Foo Bar can behave like a flandip",
                   classname: "can behave like a flandip",
-                  time: "30.003"
+                  time: "30.003",
+                  retries: "0",
+                  conclusion: "failure"
                 }
               },
               {
@@ -96,7 +104,8 @@ module.exports = function(stats, options) {
               timestamp: "1970-01-01T00:01:40", // new Date(100001).toISOString().slice(0, -5)
               tests: "1",
               failures: "0",
-              time: "400.005"
+              time: "400.005",
+              retries: "0"
             }
           },
           {
@@ -104,7 +113,9 @@ module.exports = function(stats, options) {
               _attr: {
                 name: "Another suite! works",
                 classname: "works",
-                time: "400.004"
+                time: "400.004",
+                retries: "0",
+                conclusion: "success"
               }
             }
           }
@@ -148,7 +159,8 @@ module.exports = function(stats, options) {
             tests: "1",
             failures: "0",
             skipped: "1",
-            time: "0.000"
+            time: "0.000",
+            retries: "0"
           }
         },
         {
@@ -157,7 +169,9 @@ module.exports = function(stats, options) {
               _attr: {
                 name: "Pending suite! pending",
                 classname: "pending",
-                time: "0.000"
+                time: "0.000",
+                retries: "0",
+                conclusion: "success"
               }
             },
             {
