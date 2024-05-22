@@ -194,6 +194,31 @@ function getJenkinsClassname (test, options) {
   return titles.join(options.suiteTitleSeparatedBy);
 }
 
+function formatErrorMessage(err, removeInvalidCharacters) {
+  var message;
+  if (err.message && typeof err.message.toString === 'function') {
+    message = err.message + '';
+  } else if (typeof err.inspect === 'function') {
+    message = err.inspect() + '';
+  } else {
+    message = '';
+  }
+  var failureMessage = err.stack || message;
+  if (!Base.hideDiff && err.expected !== undefined) {
+    var oldUseColors = Base.useColors;
+    Base.useColors = false;
+    failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
+    Base.useColors = oldUseColors;
+  }
+  return {
+    _attr: {
+      message: removeInvalidCharacters(message) || '',
+      type: err.name || ''
+    },
+    _cdata: removeInvalidCharacters(failureMessage)
+  };
+}
+
 /**
  * JUnit reporter for mocha.js.
  * @module mocha-junit-reporter
@@ -330,7 +355,9 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
       _attr: {
         name: flipClassAndName ? classname : name,
         time: (typeof test.duration === 'undefined') ? 0 : test.duration / 1000,
-        classname: flipClassAndName ? name : classname
+        classname: flipClassAndName ? name : classname,
+        retries: test._currentRetry,
+        conclusion: err ? 'failure' : 'success',
       }
     }]
   };
@@ -356,31 +383,14 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
     testcase.testcase.push({'system-err': this.removeInvalidCharacters(stripAnsi(test.consoleErrors.join('\n')))});
   }
 
+  if (test.prevAttempts) {
+    const self = this;
+    test.prevAttempts.forEach(function (attempt) {
+      testcase.testcase.push({flakyFailure: formatErrorMessage(attempt.err, self.removeInvalidCharacters)});
+    });
+  }
   if (err) {
-    var message;
-    if (err.message && typeof err.message.toString === 'function') {
-      message = err.message + '';
-    } else if (typeof err.inspect === 'function') {
-      message = err.inspect() + '';
-    } else {
-      message = '';
-    }
-    var failureMessage = err.stack || message;
-    if (!Base.hideDiff && err.expected !== undefined) {
-        var oldUseColors = Base.useColors;
-        Base.useColors = false;
-        failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
-        Base.useColors = oldUseColors;
-    }
-    var failureElement = {
-      _attr: {
-        message: this.removeInvalidCharacters(message) || '',
-        type: err.name || ''
-      },
-      _cdata: this.removeInvalidCharacters(failureMessage)
-    };
-
-    testcase.testcase.push({failure: failureElement});
+    testcase.testcase.push({failure: formatErrorMessage(err, this.removeInvalidCharacters)});
   }
   return testcase;
 };
@@ -468,6 +478,7 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
     _suiteAttr.timestamp = new Date(_suiteAttr.timestamp).toISOString().slice(0, -5);
     _suiteAttr.failures = 0;
     _suiteAttr.skipped = 0;
+    _suiteAttr.retries = 0;
 
     _cases.forEach(function(testcase) {
       var lastNode = testcase.testcase[testcase.testcase.length - 1];
@@ -476,6 +487,9 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
       _suiteAttr.failures += Number('failure' in lastNode);
       if (typeof testcase.testcase[0]._attr.time === 'number') {
         testcase.testcase[0]._attr.time = testcase.testcase[0]._attr.time.toFixed(3);
+      }
+      if (typeof testcase.testcase[0]._attr.retries === 'number') {
+        _suiteAttr.retries += testcase.testcase[0]._attr.retries;
       }
     });
 
